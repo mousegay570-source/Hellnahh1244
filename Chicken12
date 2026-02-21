@@ -1,0 +1,527 @@
+local Players = game:GetService("Players")
+local TextChatService = game:GetService("TextChatService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+local looping = false
+local bangAllLooping = false
+local spinning = false
+local spinSpeed = 10
+local bangDelay = 2
+local flingActive = false
+local bangTrack = nil
+local spinAngle = 0  -- accumulated spin angle so bang+spin both work
+
+local bangAnim = Instance.new("Animation")
+bangAnim.AnimationId = "rbxassetid://223623937"
+
+if not ReplicatedStorage:FindFirstChild("juisdfj0i32i0eidsuf0iok") then
+    local d = Instance.new("Decal")
+    d.Name = "juisdfj0i32i0eidsuf0iok"
+    d.Parent = ReplicatedStorage
+end
+
+-- ============ GUI ============
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "BangGui"
+Gui.Parent = game.CoreGui
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- ============ INTRO ============
+local Intro = Instance.new("Frame")
+Intro.Parent = Gui
+Intro.BackgroundColor3 = Color3.fromRGB(255,255,255)
+Intro.Position = UDim2.new(0.5,-160,0.5,-110)
+Intro.Size = UDim2.new(0,320,0,220)
+Intro.BorderSizePixel = 0
+Instance.new("UICorner",Intro).CornerRadius = UDim.new(0,16)
+local is = Instance.new("UIStroke",Intro)
+is.Color = Color3.fromRGB(255,85,127); is.Thickness = 2; is.Transparency = 0.3
+local ia = Instance.new("Frame",Intro)
+ia.BackgroundColor3=Color3.fromRGB(255,85,127); ia.Size=UDim2.new(1,0,0,4); ia.BorderSizePixel=0
+Instance.new("UICorner",ia).CornerRadius=UDim.new(0,16)
+local itl = Instance.new("TextLabel",Intro)
+itl.BackgroundTransparency=1; itl.Position=UDim2.new(0,0,0.13,0)
+itl.Size=UDim2.new(1,0,0,52); itl.Font=Enum.Font.GothamBold
+itl.Text="Physics control"; itl.TextColor3=Color3.fromRGB(255,85,127); itl.TextSize=36
+local isl = Instance.new("TextLabel",Intro)
+isl.BackgroundTransparency=1; isl.Position=UDim2.new(0,0,0.45,0)
+isl.Size=UDim2.new(1,0,0,20); isl.Font=Enum.Font.Gotham
+isl.Text="Player Looper v2.0 · By Fenzoxy"
+isl.TextColor3=Color3.fromRGB(150,150,170); isl.TextSize=13
+local ContBtn = Instance.new("TextButton",Intro)
+ContBtn.BackgroundColor3=Color3.fromRGB(255,85,127)
+ContBtn.Position=UDim2.new(0.5,-65,0.67,0); ContBtn.Size=UDim2.new(0,130,0,38)
+ContBtn.Font=Enum.Font.GothamBold; ContBtn.Text="CONTINUE"
+ContBtn.TextColor3=Color3.fromRGB(255,255,255); ContBtn.TextSize=14
+ContBtn.AutoButtonColor=false; ContBtn.BorderSizePixel=0
+Instance.new("UICorner",ContBtn).CornerRadius=UDim.new(0,10)
+
+-- ============ SHADOW ============
+local Shd = Instance.new("Frame",Gui)
+Shd.BackgroundColor3=Color3.fromRGB(180,180,200)
+Shd.Position=UDim2.new(0.5,-183,0.5,-222); Shd.Size=UDim2.new(0,370,0,460)
+Shd.ZIndex=0; Shd.BackgroundTransparency=0.75; Shd.Visible=false; Shd.BorderSizePixel=0
+Instance.new("UICorner",Shd).CornerRadius=UDim.new(0,16)
+
+-- ============ MAIN FRAME ============
+local Main = Instance.new("Frame")
+Main.Parent = Gui
+Main.BackgroundColor3 = Color3.fromRGB(255,255,255)
+Main.Position = UDim2.new(0.5,-185,0.5,-225)
+Main.Size = UDim2.new(0,370,0,460)
+Main.Visible = false; Main.BackgroundTransparency = 1
+Main.BorderSizePixel = 0; Main.Active = true
+Instance.new("UICorner",Main).CornerRadius = UDim.new(0,16)
+local ms = Instance.new("UIStroke",Main)
+ms.Color = Color3.fromRGB(220,220,235); ms.Thickness = 2
+
+-- ============ TOP BAR ============
+local TopBar = Instance.new("Frame",Main)
+TopBar.BackgroundColor3=Color3.fromRGB(255,255,255)
+TopBar.Size=UDim2.new(1,0,0,44); TopBar.BorderSizePixel=0
+Instance.new("UICorner",TopBar).CornerRadius=UDim.new(0,16)
+local tba=Instance.new("Frame",TopBar)
+tba.BackgroundColor3=Color3.fromRGB(255,85,127); tba.Size=UDim2.new(1,0,0,4); tba.BorderSizePixel=0
+Instance.new("UICorner",tba).CornerRadius=UDim.new(0,16)
+local Ttl=Instance.new("TextLabel",TopBar)
+Ttl.BackgroundTransparency=1; Ttl.Position=UDim2.new(0,12,0,0)
+Ttl.Size=UDim2.new(0,240,1,0); Ttl.Font=Enum.Font.GothamBold
+Ttl.Text="bang Physics control"; Ttl.TextColor3=Color3.fromRGB(255,85,127)
+Ttl.TextSize=18; Ttl.TextXAlignment=Enum.TextXAlignment.Left
+local XBtn=Instance.new("TextButton",TopBar)
+XBtn.BackgroundColor3=Color3.fromRGB(255,85,85)
+XBtn.Position=UDim2.new(1,-40,0.5,-12); XBtn.Size=UDim2.new(0,26,0,26)
+XBtn.Font=Enum.Font.GothamBold; XBtn.Text="X"
+XBtn.TextColor3=Color3.fromRGB(255,255,255); XBtn.TextSize=13
+XBtn.AutoButtonColor=false; XBtn.BorderSizePixel=0
+Instance.new("UICorner",XBtn).CornerRadius=UDim.new(0,7)
+
+-- ============ HELPERS ============
+local function lbl(parent,pos,sz,txt,fs,col,bold)
+    local l=Instance.new("TextLabel",parent)
+    l.BackgroundTransparency=1; l.Position=pos; l.Size=sz
+    l.Font=bold and Enum.Font.GothamBold or Enum.Font.Gotham
+    l.Text=txt; l.TextColor3=col or Color3.fromRGB(80,80,100)
+    l.TextSize=fs or 13; l.TextXAlignment=Enum.TextXAlignment.Left
+    l.BorderSizePixel=0; return l
+end
+local function tbox(parent,pos,sz,ph,defaultTxt)
+    local b=Instance.new("TextBox",parent)
+    b.BackgroundColor3=Color3.fromRGB(247,247,252)
+    b.Position=pos; b.Size=sz; b.Font=Enum.Font.Gotham
+    b.PlaceholderText=ph or ""; b.Text=defaultTxt or ""
+    b.TextColor3=Color3.fromRGB(50,50,70); b.TextSize=13
+    b.ClearTextOnFocus=false; b.BorderSizePixel=0
+    Instance.new("UICorner",b).CornerRadius=UDim.new(0,9)
+    local s=Instance.new("UIStroke",b); s.Color=Color3.fromRGB(215,215,230); s.Thickness=1.5
+    return b
+end
+local function btn(parent,pos,sz,txt,bgCol,textCol)
+    local b=Instance.new("TextButton",parent)
+    b.BackgroundColor3=bgCol; b.Position=pos; b.Size=sz
+    b.Font=Enum.Font.GothamBold; b.Text=txt
+    b.TextColor3=textCol or Color3.fromRGB(255,255,255); b.TextSize=13
+    b.AutoButtonColor=false; b.BorderSizePixel=0
+    Instance.new("UICorner",b).CornerRadius=UDim.new(0,9)
+    return b
+end
+local function divLine(parent,y)
+    local d=Instance.new("Frame",parent)
+    d.BackgroundColor3=Color3.fromRGB(230,230,240)
+    d.Position=UDim2.new(0,16,0,y); d.Size=UDim2.new(1,-32,0,1); d.BorderSizePixel=0
+end
+local function hover(b,n,h)
+    b.MouseEnter:Connect(function() TweenService:Create(b,TweenInfo.new(0.15),{BackgroundColor3=h}):Play() end)
+    b.MouseLeave:Connect(function() TweenService:Create(b,TweenInfo.new(0.15),{BackgroundColor3=n}):Play() end)
+end
+
+-- ============ LAYOUT (Y positions) ============
+-- Target section
+lbl(Main,UDim2.new(0,16,0,54),UDim2.new(1,-32,0,18),"Target Player:",13,nil,true)
+local TargetBox = tbox(Main,UDim2.new(0,16,0,75),UDim2.new(1,-32,0,34),"Username or pick from list...")
+local DropBtn = btn(Main,UDim2.new(0,16,0,115),UDim2.new(1,-32,0,30),"Select Player  v",Color3.fromRGB(245,245,255),Color3.fromRGB(100,100,160))
+local dstroke=Instance.new("UIStroke",DropBtn); dstroke.Color=Color3.fromRGB(200,200,230); dstroke.Thickness=1.5
+
+local DropList=Instance.new("ScrollingFrame",Main)
+DropList.BackgroundColor3=Color3.fromRGB(252,252,255); DropList.BorderSizePixel=0
+DropList.Position=UDim2.new(0,16,0,151); DropList.Size=UDim2.new(1,-32,0,0)
+DropList.ScrollBarThickness=4; DropList.ScrollBarImageColor3=Color3.fromRGB(255,85,127)
+DropList.Visible=false; DropList.ZIndex=5; DropList.ClipsDescendants=true
+Instance.new("UICorner",DropList).CornerRadius=UDim.new(0,9)
+local dlstroke=Instance.new("UIStroke",DropList); dlstroke.Color=Color3.fromRGB(215,215,230); dlstroke.Thickness=1.5
+local DLL=Instance.new("UIListLayout",DropList)
+DLL.Padding=UDim.new(0,2); DLL.SortOrder=Enum.SortOrder.LayoutOrder
+local dlpad=Instance.new("UIPadding",DropList)
+dlpad.PaddingTop=UDim.new(0,4); dlpad.PaddingBottom=UDim.new(0,4)
+dlpad.PaddingLeft=UDim.new(0,4); dlpad.PaddingRight=UDim.new(0,4)
+
+-- Bang section
+lbl(Main,UDim2.new(0,16,0,153),UDim2.new(1,-32,0,18),"Bang Controls:",13,nil,true)
+local BangOneBtn = btn(Main,UDim2.new(0,16,0,174),UDim2.new(0,154,0,36),"▶  Bang One",Color3.fromRGB(85,210,130))
+local StopBangBtn= btn(Main,UDim2.new(0,178,0,174),UDim2.new(0,176,0,36),"■  Stop Bang",Color3.fromRGB(255,85,85))
+local BangAllBtn = btn(Main,UDim2.new(0,16,0,216),UDim2.new(0,154,0,36),"▶  Bang All",Color3.fromRGB(255,140,60))
+lbl(Main,UDim2.new(0,178,0,216),UDim2.new(0,42,0,36),"Delay:",12,Color3.fromRGB(100,100,120),true)
+local DelayBox = tbox(Main,UDim2.new(0,222,0,220),UDim2.new(0,58,0,28),"sec","2")
+local DelaySet = btn(Main,UDim2.new(0,286,0,220),UDim2.new(0,68,0,28),"Set",Color3.fromRGB(180,180,220),Color3.fromRGB(60,60,100))
+divLine(Main,262)
+
+-- Spin section
+lbl(Main,UDim2.new(0,16,0,271),UDim2.new(1,-32,0,18),"Spin:",13,nil,true)
+local SpinOnBtn  = btn(Main,UDim2.new(0,16,0,293),UDim2.new(0,100,0,32),"▶  Spin ON",Color3.fromRGB(100,160,255))
+local SpinOffBtn = btn(Main,UDim2.new(0,124,0,293),UDim2.new(0,100,0,32),"■  Spin OFF",Color3.fromRGB(200,100,255))
+lbl(Main,UDim2.new(0,232,0,293),UDim2.new(0,36,0,32),"Spd:",12,Color3.fromRGB(100,100,120),true)
+local SpinBox = tbox(Main,UDim2.new(0,268,0,297),UDim2.new(0,50,0,24),"10","10")
+local SpinSet = btn(Main,UDim2.new(0,324,0,297),UDim2.new(0,30,0,24),"▶",Color3.fromRGB(100,160,255))
+divLine(Main,335)
+
+-- Fling section
+lbl(Main,UDim2.new(0,16,0,344),UDim2.new(1,-32,0,18),"Touch Fling:",13,nil,true)
+local FlingBtn = btn(Main,UDim2.new(0,16,0,366),UDim2.new(0,160,0,36),"▶  Fling OFF",Color3.fromRGB(100,160,100))
+divLine(Main,412)
+
+-- Status (moved below fling)
+local Status = Instance.new("TextLabel",Main)
+Status.BackgroundColor3=Color3.fromRGB(250,250,255)
+Status.Position=UDim2.new(0,16,0,420); Status.Size=UDim2.new(1,-32,0,30)
+Status.Font=Enum.Font.Gotham; Status.Text="Status: Idle"
+Status.TextColor3=Color3.fromRGB(140,140,160); Status.TextSize=12
+Status.TextWrapped=true; Status.TextYAlignment=Enum.TextYAlignment.Center; Status.BorderSizePixel=0
+Instance.new("UICorner",Status).CornerRadius=UDim.new(0,9)
+local ss=Instance.new("UIStroke",Status); ss.Color=Color3.fromRGB(220,220,235); ss.Thickness=1
+
+local function setStatus(txt,col)
+    Status.Text="Status: "..txt
+    Status.TextColor3=col or Color3.fromRGB(140,140,160)
+end
+
+-- ============ OPEN BUTTON "F" ============
+local FBtn=Instance.new("TextButton",Gui)
+FBtn.BackgroundColor3=Color3.fromRGB(255,85,127)
+FBtn.Position=UDim2.new(1,-66,1,-88); FBtn.Size=UDim2.new(0,52,0,52)
+FBtn.Font=Enum.Font.GothamBold; FBtn.Text="F"
+FBtn.TextColor3=Color3.fromRGB(255,255,255); FBtn.TextSize=24
+FBtn.ZIndex=10; FBtn.AutoButtonColor=false; FBtn.Active=false; FBtn.Visible=false; FBtn.BorderSizePixel=0
+Instance.new("UICorner",FBtn).CornerRadius=UDim.new(1,0)
+local fbs=Instance.new("UIStroke",FBtn); fbs.Color=Color3.fromRGB(255,255,255); fbs.Thickness=2.5; fbs.Transparency=0.4
+
+-- ============ HOVER ============
+hover(ContBtn,Color3.fromRGB(255,85,127),Color3.fromRGB(235,65,107))
+hover(XBtn,Color3.fromRGB(255,85,85),Color3.fromRGB(235,65,65))
+hover(BangOneBtn,Color3.fromRGB(85,210,130),Color3.fromRGB(65,190,110))
+hover(StopBangBtn,Color3.fromRGB(255,85,85),Color3.fromRGB(235,65,65))
+hover(BangAllBtn,Color3.fromRGB(255,140,60),Color3.fromRGB(235,120,40))
+hover(SpinOnBtn,Color3.fromRGB(100,160,255),Color3.fromRGB(80,140,235))
+hover(SpinOffBtn,Color3.fromRGB(200,100,255),Color3.fromRGB(180,80,235))
+hover(FBtn,Color3.fromRGB(255,85,127),Color3.fromRGB(235,65,107))
+hover(DelaySet,Color3.fromRGB(180,180,220),Color3.fromRGB(160,160,200))
+hover(SpinSet,Color3.fromRGB(100,160,255),Color3.fromRGB(80,140,235))
+hover(DropBtn,Color3.fromRGB(245,245,255),Color3.fromRGB(235,235,255))
+
+-- ============ DRAG: FBtn ============
+local fDrag,fDragIn,fDragStart,fStartPos,fIsDrag=false,nil,nil,nil,false
+FBtn.InputBegan:Connect(function(i)
+    if not FBtn.Active then return end
+    if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
+        fDrag=true; fIsDrag=false; fDragStart=i.Position; fStartPos=FBtn.Position
+    end
+end)
+FBtn.InputChanged:Connect(function(i)
+    if i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch then fDragIn=i end
+end)
+FBtn.InputEnded:Connect(function(i)
+    if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then fDrag=false end
+end)
+
+-- ============ DRAG: Main (FULL BACKGROUND) ============
+-- We use Main directly so any area of the frame can drag it
+-- Buttons inside will still fire their own events normally
+local mDrag,mDragIn,mDragStart,mStartPos=false,nil,nil,nil
+
+Main.InputBegan:Connect(function(i)
+    if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
+        mDrag=true; mDragStart=i.Position; mStartPos=Main.Position
+    end
+end)
+Main.InputChanged:Connect(function(i)
+    if i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch then mDragIn=i end
+end)
+
+UserInputService.InputChanged:Connect(function(i)
+    if i==fDragIn and fDrag then
+        local d=i.Position-fDragStart
+        if math.abs(d.X)>5 or math.abs(d.Y)>5 then fIsDrag=true end
+        if fIsDrag then FBtn.Position=UDim2.new(fStartPos.X.Scale,fStartPos.X.Offset+d.X,fStartPos.Y.Scale,fStartPos.Y.Offset+d.Y) end
+    end
+    if i==mDragIn and mDrag then
+        local d=i.Position-mDragStart
+        local np=UDim2.new(mStartPos.X.Scale,mStartPos.X.Offset+d.X,mStartPos.Y.Scale,mStartPos.Y.Offset+d.Y)
+        Main.Position=np
+        Shd.Position=UDim2.new(np.X.Scale,np.X.Offset+2,np.Y.Scale,np.Y.Offset+3)
+    end
+end)
+UserInputService.InputEnded:Connect(function(i)
+    if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
+        mDrag=false
+    end
+end)
+
+-- ============ GUI OPEN/CLOSE ============
+local isOpen,guiReady=false,false
+local function openMain()
+    if isOpen or not guiReady then return end
+    isOpen=true; Main.Visible=true; Shd.Visible=true
+    Main.Position=UDim2.new(0.5,-185,1.5,0); Main.BackgroundTransparency=1
+    TweenService:Create(Main,TweenInfo.new(0.5,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{
+        Position=UDim2.new(0.5,-185,0.5,-225),BackgroundTransparency=0}):Play()
+end
+local function closeMain()
+    if not isOpen then return end
+    isOpen=false
+    TweenService:Create(Main,TweenInfo.new(0.4,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{
+        Position=UDim2.new(0.5,-185,1.5,0),BackgroundTransparency=1}):Play()
+    task.wait(0.42); Main.Visible=false; Shd.Visible=false
+end
+
+-- ============ CORE LOGIC ============
+local function findPlayer(name)
+    if name=="" then return nil end
+    name=name:lower()
+    for _,p in Players:GetPlayers() do
+        if p.Name:lower():find(name) or p.DisplayName:lower():find(name) then return p end
+    end
+end
+
+-- SPIN: accumulates angle each Heartbeat step, always active when spinning=true.
+-- Bang position loop will INCLUDE this spin rotation so both work together.
+RunService.Heartbeat:Connect(function(dt)
+    if not spinning then return end
+    spinAngle = spinAngle + spinSpeed * dt * 60  -- degrees per second scaled
+end)
+
+-- FLING
+local flingVel,flingChar,flingHRP,flingMoveL=nil,nil,nil,0.1
+RunService.Heartbeat:Connect(function()
+    if not flingActive then return end
+    if not (flingChar and flingChar.Parent and flingHRP and flingHRP.Parent) then
+        flingChar=player.Character
+        flingHRP=flingChar and flingChar:FindFirstChild("HumanoidRootPart"); return
+    end
+    flingVel=flingHRP.Velocity
+    flingHRP.Velocity=flingVel*10000+Vector3.new(0,10000,0)
+end)
+RunService.RenderStepped:Connect(function()
+    if not flingActive or not flingHRP or not flingHRP.Parent or not flingVel then return end
+    flingHRP.Velocity=flingVel
+end)
+RunService.Stepped:Connect(function()
+    if not flingActive or not flingHRP or not flingHRP.Parent or not flingVel then return end
+    flingHRP.Velocity=flingVel+Vector3.new(0,flingMoveL,0); flingMoveL=flingMoveL*-1
+end)
+
+-- Bang position + spin combined in one loop
+-- Key fix: apply spinAngle rotation AFTER setting position, so spin works during bang
+local function startBangOn(target)
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        local anim=player.Character.Humanoid:FindFirstChildOfClass("Animator")
+            or Instance.new("Animator",player.Character.Humanoid)
+        if bangTrack then bangTrack:Stop() end
+        bangTrack=anim:LoadAnimation(bangAnim)
+        bangTrack.Priority=Enum.AnimationPriority.Action
+        bangTrack.Looped=true; bangTrack:Play()
+    end
+    task.spawn(function()
+        local t=0
+        while looping and target and target.Character and player.Character do
+            local tHRP=target.Character:FindFirstChild("HumanoidRootPart")
+            local mHRP=player.Character:FindFirstChild("HumanoidRootPart")
+            if tHRP and mHRP then
+                local oz=1.8*math.sin(t*7)
+                -- Position relative to target, then apply spin rotation on Y axis
+                local baseCF = tHRP.CFrame * CFrame.new(0,0,0.8+oz)
+                if spinning then
+                    -- Keep XZ position from target, apply spin Y rotation
+                    local pos = baseCF.Position
+                    mHRP.CFrame = CFrame.new(pos) * CFrame.Angles(0, math.rad(spinAngle), 0)
+                else
+                    mHRP.CFrame = baseCF
+                end
+            end
+            t+=RunService.Heartbeat:Wait()
+        end
+    end)
+end
+
+-- When NOT banging, spin is applied via a separate loop
+local spinOnlyConn
+local function startSpinOnly()
+    if spinOnlyConn then spinOnlyConn:Disconnect() end
+    spinOnlyConn = RunService.RenderStepped:Connect(function()
+        if looping then return end  -- bang loop handles spin during bang
+        if not spinning then return end
+        local hrp=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then hrp.CFrame=hrp.CFrame*CFrame.Angles(0,math.rad(spinSpeed*0.3),0) end
+    end)
+end
+startSpinOnly()
+
+local function stopBang()
+    looping=false; bangAllLooping=false
+    if bangTrack and bangTrack.IsPlaying then bangTrack:Stop() end
+    bangTrack=nil
+    setStatus("Bang stopped",Color3.fromRGB(255,150,60))
+end
+local function bangOne(name)
+    local t=findPlayer(name)
+    if not t or t==player then setStatus("Invalid target!",Color3.fromRGB(255,85,85)); return end
+    looping=true
+    setStatus("Banging "..t.DisplayName,Color3.fromRGB(85,200,120))
+    startBangOn(t)
+end
+local function bangAll()
+    if bangAllLooping then return end
+    bangAllLooping=true
+    task.spawn(function()
+        while bangAllLooping do
+            local all={}
+            for _,p in Players:GetPlayers() do
+                if p~=player then table.insert(all,p) end
+            end
+            if #all==0 then
+                setStatus("No other players!",Color3.fromRGB(200,200,200)); task.wait(2)
+            else
+                for i,p in ipairs(all) do
+                    if not bangAllLooping then break end
+                    looping=true
+                    setStatus("Bang All → "..p.DisplayName.." ("..i.."/"..#all..")",Color3.fromRGB(255,140,60))
+                    startBangOn(p)
+                    task.wait(bangDelay)
+                    looping=false
+                    if bangTrack then bangTrack:Stop() end
+                    task.wait(0.05)
+                end
+            end
+        end
+        looping=false
+        if bangTrack then bangTrack:Stop() end
+    end)
+end
+local function startSpin()
+    spinning=true
+    setStatus("Spinning speed "..spinSpeed,Color3.fromRGB(100,160,255))
+end
+local function stopSpin()
+    spinning=false
+    setStatus("Spin OFF",Color3.fromRGB(200,100,255))
+end
+local function setFling(state)
+    flingActive=state
+    flingChar=player.Character
+    flingHRP=flingChar and flingChar:FindFirstChild("HumanoidRootPart")
+    flingMoveL=0.1
+    if state then
+        FlingBtn.BackgroundColor3=Color3.fromRGB(220,60,60); FlingBtn.Text="■  Fling ON"
+        setStatus("Fling ACTIVE",Color3.fromRGB(220,60,60))
+    else
+        FlingBtn.BackgroundColor3=Color3.fromRGB(100,160,100); FlingBtn.Text="▶  Fling OFF"
+        setStatus("Fling OFF",Color3.fromRGB(140,140,160))
+    end
+end
+
+-- ============ DROPDOWN ============
+local dropOpen=false
+local function closeDropdown()
+    dropOpen=false
+    TweenService:Create(DropList,TweenInfo.new(0.18),{Size=UDim2.new(1,-32,0,0)}):Play()
+    task.delay(0.19,function() DropList.Visible=false end)
+    DropBtn.Text="Select Player  v"
+end
+local function openDropdown()
+    for _,c in DropList:GetChildren() do
+        if c:IsA("TextButton") then c:Destroy() end
+    end
+    local all,count={},0
+    for _,p in Players:GetPlayers() do
+        if p~=player then table.insert(all,p) end
+    end
+    local dotCols={Color3.fromRGB(255,120,120),Color3.fromRGB(120,180,255),Color3.fromRGB(120,230,160),Color3.fromRGB(255,210,80),Color3.fromRGB(190,130,255)}
+    for i,p in ipairs(all) do
+        count+=1
+        local b=Instance.new("TextButton",DropList)
+        b.BackgroundColor3=Color3.fromRGB(250,250,255); b.Size=UDim2.new(1,-8,0,32)
+        b.Font=Enum.Font.GothamBold; b.TextSize=12
+        b.Text="   "..p.DisplayName.." (@"..p.Name..")"
+        b.TextColor3=Color3.fromRGB(50,50,80); b.TextXAlignment=Enum.TextXAlignment.Left
+        b.AutoButtonColor=false; b.BorderSizePixel=0; b.ZIndex=6; b.LayoutOrder=i
+        Instance.new("UICorner",b).CornerRadius=UDim.new(0,7)
+        local dot=Instance.new("Frame",b)
+        dot.BackgroundColor3=dotCols[(i-1)%#dotCols+1]
+        dot.Size=UDim2.new(0,7,0,7); dot.Position=UDim2.new(0,5,0.5,-3.5)
+        dot.BorderSizePixel=0; dot.ZIndex=7
+        Instance.new("UICorner",dot).CornerRadius=UDim.new(1,0)
+        b.MouseEnter:Connect(function() TweenService:Create(b,TweenInfo.new(0.12),{BackgroundColor3=Color3.fromRGB(255,238,245)}):Play() end)
+        b.MouseLeave:Connect(function() TweenService:Create(b,TweenInfo.new(0.12),{BackgroundColor3=Color3.fromRGB(250,250,255)}):Play() end)
+        b.MouseButton1Click:Connect(function() TargetBox.Text=p.Name; closeDropdown() end)
+    end
+    if count==0 then
+        local nl=Instance.new("TextLabel",DropList)
+        nl.BackgroundTransparency=1; nl.Size=UDim2.new(1,0,0,28)
+        nl.Font=Enum.Font.Gotham; nl.Text="No other players"
+        nl.TextColor3=Color3.fromRGB(180,180,200); nl.TextSize=12; nl.ZIndex=6
+    end
+    DropList.CanvasSize=UDim2.new(0,0,0,DLL.AbsoluteContentSize.Y+8)
+    local h=math.min(count*36+8,108)
+    dropOpen=true; DropList.Visible=true
+    TweenService:Create(DropList,TweenInfo.new(0.18),{Size=UDim2.new(1,-32,0,h)}):Play()
+    DropBtn.Text="Select Player  ^"
+end
+DropBtn.MouseButton1Click:Connect(function()
+    if not guiReady then return end
+    if dropOpen then closeDropdown() else openDropdown() end
+end)
+
+-- ============ BUTTON CLICKS ============
+BangOneBtn.MouseButton1Click:Connect(function()
+    if not guiReady then return end
+    bangAllLooping=false; looping=false; task.wait(0.05); bangOne(TargetBox.Text)
+end)
+StopBangBtn.MouseButton1Click:Connect(stopBang)
+BangAllBtn.MouseButton1Click:Connect(function()
+    if not guiReady then return end; bangAll()
+end)
+DelaySet.MouseButton1Click:Connect(function()
+    local v=tonumber(DelayBox.Text)
+    if v and v>0 then bangDelay=v; setStatus("Delay → "..v.."s",Color3.fromRGB(180,180,220))
+    else setStatus("Invalid delay!",Color3.fromRGB(255,85,85)) end
+end)
+DelayBox.FocusLost:Connect(function(e) if e then DelaySet.MouseButton1Click:Fire() end end)
+SpinOnBtn.MouseButton1Click:Connect(startSpin)
+SpinOffBtn.MouseButton1Click:Connect(stopSpin)
+SpinSet.MouseButton1Click:Connect(function()
+    local v=tonumber(SpinBox.Text)
+    if v then spinSpeed=v; setStatus("Spin speed → "..v,Color3.fromRGB(100,160,255))
+    else setStatus("Invalid speed!",Color3.fromRGB(255,85,85)) end
+end)
+SpinBox.FocusLost:Connect(function(e) if e then SpinSet.MouseButton1Click:Fire() end end)
+FlingBtn.MouseButton1Click:Connect(function() setFling(not flingActive) end)
+XBtn.MouseButton1Click:Connect(function() stopBang(); stopSpin(); setFling(false); closeMain() end)
+FBtn.MouseButton1Click:Connect(function()
+    if fIsDrag then return end
+    if isOpen then closeMain() else openMain() end
+end)
+
+-- ============ CONTINUE ============
+ContBtn.MouseButton1Click:Connect(function()
+    Intro:TweenPosition(UDim2.new(0.5,-160,-0.6,0),"Out","Back",0.5,true)
+    task.wait(0.5); Intro.Visible=false
+    guiReady=true; FBtn.Active=true; FBtn.Visible=true; openMain()
+end)
+
+if TextChatService.TextChannels:FindFirstChild("RBXSystem") then
+    TextChatService.TextChannels.RBXSystem:DisplaySystemMessage(
+        "Loaded by <font color=\"#FF557F\">Fenzoxy</font> keyless<font color=\"#FF557F\">modded</font>"
+    )
+end
