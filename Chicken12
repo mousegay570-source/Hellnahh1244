@@ -46,7 +46,7 @@ Instance.new("UICorner",ia).CornerRadius=UDim.new(0,16)
 local itl = Instance.new("TextLabel",Intro)
 itl.BackgroundTransparency=1; itl.Position=UDim2.new(0,0,0.13,0)
 itl.Size=UDim2.new(1,0,0,52); itl.Font=Enum.Font.GothamBold
-itl.Text="Physics control"; itl.TextColor3=Color3.fromRGB(255,85,127); itl.TextSize=36
+itl.Text="sus bang"; itl.TextColor3=Color3.fromRGB(255,85,127); itl.TextSize=36
 local isl = Instance.new("TextLabel",Intro)
 isl.BackgroundTransparency=1; isl.Position=UDim2.new(0,0,0.45,0)
 isl.Size=UDim2.new(1,0,0,20); isl.Font=Enum.Font.Gotham
@@ -90,7 +90,7 @@ Instance.new("UICorner",tba).CornerRadius=UDim.new(0,16)
 local Ttl=Instance.new("TextLabel",TopBar)
 Ttl.BackgroundTransparency=1; Ttl.Position=UDim2.new(0,12,0,0)
 Ttl.Size=UDim2.new(0,240,1,0); Ttl.Font=Enum.Font.GothamBold
-Ttl.Text="bang Physics control"; Ttl.TextColor3=Color3.fromRGB(255,85,127)
+Ttl.Text="bang gui"; Ttl.TextColor3=Color3.fromRGB(255,85,127)
 Ttl.TextSize=18; Ttl.TextXAlignment=Enum.TextXAlignment.Left
 local XBtn=Instance.new("TextButton",TopBar)
 XBtn.BackgroundColor3=Color3.fromRGB(255,85,85)
